@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Imovel {
+  id          String    @id @default(cuid())
+  titulo      String
+  tipo        String    // apartamento, casa, terreno, comercial...
+  finalidade  String    @default("venda") // venda ou aluguel
+  bairro      String
+  cidade      String
+  quartos     Int       @default(0)
+  banheiros   Int       @default(0)
+  vagas       Int       @default(0)
+  area        Float     @default(0) // m2
+  preco       Float     @default(0)
+  descricao   String    @default("")
+  criadoEm    DateTime  @default(now())
+  anuncios    Anuncio[]
+}
+
+model Anuncio {
+  id        String   @id @default(cuid())
+  canal     String   // instagram, whatsapp, portal
+  conteudo  String
+  imovel    Imovel   @relation(fields: [imovelId], references: [id], onDelete: Cascade)
+  imovelId  String
+  criadoEm  DateTime @default(now())
+}
+
+model Cliente {
+  id         String   @id @default(cuid())
+  nome       String
+  telefone   String   @default("")
+  email      String   @default("")
+  instagram  String   @default("")
+  etapa      String   @default("Novo") // Novo, Contato, Visita, Proposta, Fechado
+  interesse  String   @default("") // o que procura / imóvel de interesse
+  observacao String   @default("") // anotações
+  criadoEm   DateTime @default(now())
+  atualizado DateTime @updatedAt
+}
+
+model Carteira {
+  id         String    @id @default("default")
+  videos     Int       @default(0)
+  leads      Int       @default(0)
+  descricoes Int       @default(0)
+  ultimoGiro DateTime?
+}
