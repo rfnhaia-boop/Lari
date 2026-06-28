@@ -71,11 +71,11 @@ export function CrmView() {
       {carregando ? (
         <div className="glass h-40 animate-pulse rounded-2xl" />
       ) : (
-        <div className="flex gap-3 overflow-x-auto pb-2">
+        <div className="flex gap-3 overflow-x-auto pb-2 lg:grid lg:grid-cols-5 lg:overflow-visible">
           {ETAPAS.map((etapa) => {
             const lista = clientes.filter((c) => c.etapa === etapa);
             return (
-              <div key={etapa} className="w-60 shrink-0">
+              <div key={etapa} className="w-60 shrink-0 lg:w-auto lg:min-w-0">
                 <div className="mb-2 flex items-center justify-between px-1">
                   <span className="text-xs font-semibold uppercase tracking-wide text-white">{etapa}</span>
                   <span className="rounded-full bg-white/10 px-2 text-xs text-muted">{lista.length}</span>
@@ -177,8 +177,8 @@ function ClienteModal({ cliente, onClose, onSalvo }: { cliente: Cliente; onClose
   const insta = linkInstagram(f.instagram);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="glass-strong max-h-[88vh] w-full max-w-md overflow-y-auto rounded-2xl p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 p-4 backdrop-blur-md">
+      <div className="glass-strong max-h-[88vh] w-full max-w-md overflow-y-auto rounded-2xl p-6 ring-1 ring-white/10">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Editar cliente</h2>
           <button onClick={onClose} aria-label="Fechar" className="rounded-lg p-1 text-muted hover:bg-white/10 hover:text-white">
@@ -239,8 +239,8 @@ function ClienteForm({ onClose, onCreated }: { onClose: () => void; onCreated: (
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="glass-strong w-full max-w-md rounded-2xl p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 p-4 backdrop-blur-md">
+      <div className="glass-strong w-full max-w-md rounded-2xl p-6 ring-1 ring-white/10">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Novo cliente</h2>
           <button onClick={onClose} aria-label="Fechar" className="rounded-lg p-1 text-muted hover:bg-white/10 hover:text-white">
