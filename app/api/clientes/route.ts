@@ -20,6 +20,7 @@ export async function POST(req: Request) {
       etapa: String(data.etapa ?? "Novo"),
       interesse: String(data.interesse ?? ""),
       observacao: String(data.observacao ?? ""),
+      historico: String(data.historico ?? ""),
     },
   });
   return NextResponse.json(cliente, { status: 201 });

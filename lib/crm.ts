@@ -10,8 +10,30 @@ export interface Cliente {
   etapa: string;
   interesse: string;
   observacao: string;
+  historico: string;
   criadoEm: string;
   atualizado: string;
+}
+
+// Histórico de contatos: armazenado como JSON no campo `historico`
+export interface ContatoHist {
+  data: string; // ISO
+  texto: string;
+}
+
+export function parseHistorico(raw: string): ContatoHist[] {
+  try {
+    const arr = JSON.parse(raw || "[]");
+    return Array.isArray(arr) ? arr.filter((x) => x && typeof x.texto === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+export function fmtDataCurta(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
 }
 
 // Monta links de contato

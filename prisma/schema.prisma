@@ -42,6 +42,7 @@ model Cliente {
   etapa      String   @default("Novo") // Novo, Contato, Visita, Proposta, Fechado
   interesse  String   @default("") // o que procura / imóvel de interesse
   observacao String   @default("") // anotações
+  historico  String   @default("") // JSON: [{data, texto}] histórico de contatos
   criadoEm   DateTime @default(now())
   atualizado DateTime @updatedAt
 }

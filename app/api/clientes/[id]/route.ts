@@ -14,6 +14,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         ...(data.instagram !== undefined && { instagram: String(data.instagram) }),
         ...(data.interesse !== undefined && { interesse: String(data.interesse) }),
         ...(data.observacao !== undefined && { observacao: String(data.observacao) }),
+        ...(data.historico !== undefined && { historico: String(data.historico) }),
       },
     });
     return NextResponse.json(cliente);

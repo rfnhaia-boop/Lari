@@ -21,6 +21,7 @@ import { DescricaoChat } from "@/components/descricao-chat";
 import { RoletaModal } from "@/components/roleta-modal";
 import { CrmView } from "@/components/crm-view";
 import { SKILLS } from "@/lib/skills";
+import { type Cliente, parseHistorico, fmtDataCurta } from "@/lib/crm";
 
 interface Carteira {
   videos: number;
@@ -106,6 +107,30 @@ export default function LariPage() {
     setView("hub");
   }
 
+  // Puxa um cliente do CRM pro chat: leva todo o contexto e pede a abordagem
+  function mandarClienteParaLari(c: Cliente) {
+    const hist = parseHistorico(c.historico);
+    const linhasHist = hist.length
+      ? hist.map((h, i) => `${i + 1}. ${fmtDataCurta(h.data)} — ${h.texto}`).join("\n")
+      : "Nenhum contato registrado.";
+    const contexto = [
+      `Cliente: ${c.nome}`,
+      `Etapa no funil: ${c.etapa}`,
+      `Telefone: ${c.telefone || "—"}`,
+      `E-mail: ${c.email || "—"}`,
+      `Instagram: ${c.instagram || "—"}`,
+      `Interesse: ${c.interesse || "—"}`,
+      c.observacao ? `Anotações: ${c.observacao}` : "",
+      `Histórico de contato:\n${linhasHist}`,
+      "",
+      "Me ajuda com esse cliente: qual a melhor abordagem agora e escreve a mensagem de WhatsApp ideal pra avançar ele no funil.",
+    ].filter(Boolean).join("\n");
+
+    setView("hub");
+    setSkillAtiva("whatsapp");
+    append({ role: "user", content: contexto }, { body: { skillId: "whatsapp" } });
+  }
+
   return (
     <main className="relative min-h-screen overflow-hidden">
       {/* Imagem de fundo + overlay */}
@@ -182,7 +207,7 @@ export default function LariPage() {
             </motion.div>
           ) : view === "crm" ? (
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-              <CrmView />
+              <CrmView onMandarParaLari={mandarClienteParaLari} />
             </motion.div>
           ) : (
           <AnimatePresence mode="wait">

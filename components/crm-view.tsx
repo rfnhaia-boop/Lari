@@ -1,14 +1,20 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Plus, Trash2, ChevronLeft, ChevronRight, Phone, X, Sparkles, MessageCircle, Mail, Instagram } from "lucide-react";
-import { ETAPAS, type Cliente, linkWhatsApp, linkEmail, linkInstagram } from "@/lib/crm";
+import {
+  Plus, Trash2, ChevronLeft, ChevronRight, Phone, X, Sparkles,
+  MessageCircle, Mail, Instagram, Pencil, Target, ArrowLeft, StickyNote,
+} from "lucide-react";
+import {
+  ETAPAS, type Cliente, type ContatoHist,
+  linkWhatsApp, linkEmail, linkInstagram, parseHistorico, fmtDataCurta,
+} from "@/lib/crm";
 
-export function CrmView() {
+export function CrmView({ onMandarParaLari }: { onMandarParaLari?: (c: Cliente) => void }) {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [formAberto, setFormAberto] = useState(false);
-  const [editando, setEditando] = useState<Cliente | null>(null);
+  const [aberto, setAberto] = useState<Cliente | null>(null);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
@@ -86,7 +92,7 @@ export function CrmView() {
                     return (
                       <article
                         key={c.id}
-                        onClick={() => setEditando(c)}
+                        onClick={() => setAberto(c)}
                         className="glass cursor-pointer rounded-xl p-3 transition-colors hover:border-primary/40"
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -133,13 +139,14 @@ export function CrmView() {
         />
       )}
 
-      {editando && (
+      {aberto && (
         <ClienteModal
-          cliente={editando}
-          onClose={() => setEditando(null)}
-          onSalvo={() => {
-            setEditando(null);
-            carregar();
+          clienteInicial={aberto}
+          onClose={() => setAberto(null)}
+          onAtualizado={carregar}
+          onMandarParaLari={(c) => {
+            setAberto(null);
+            onMandarParaLari?.(c);
           }}
         />
       )}
@@ -147,7 +154,170 @@ export function CrmView() {
   );
 }
 
-function ClienteModal({ cliente, onClose, onSalvo }: { cliente: Cliente; onClose: () => void; onSalvo: () => void }) {
+const campo = "w-full rounded-lg bg-black/30 px-3 py-2 text-sm text-white placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary/50";
+
+function EtapaBadge({ etapa }: { etapa: string }) {
+  return (
+    <span className="rounded-full bg-primary/20 px-2.5 py-0.5 text-xs font-medium text-primary ring-1 ring-primary/30">
+      {etapa}
+    </span>
+  );
+}
+
+function ClienteModal({
+  clienteInicial, onClose, onAtualizado, onMandarParaLari,
+}: {
+  clienteInicial: Cliente;
+  onClose: () => void;
+  onAtualizado: () => void;
+  onMandarParaLari: (c: Cliente) => void;
+}) {
+  const [cliente, setCliente] = useState<Cliente>(clienteInicial);
+  const [modo, setModo] = useState<"view" | "edit">("view");
+
+  const wa = linkWhatsApp(cliente.telefone);
+  const mail = linkEmail(cliente.email);
+  const insta = linkInstagram(cliente.instagram);
+  const historico = parseHistorico(cliente.historico);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 p-3 backdrop-blur-md sm:p-4">
+      <div className="glass-modal flex h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-3xl text-white">
+        {modo === "view" ? (
+          <ViewMode
+            cliente={cliente}
+            wa={wa} mail={mail} insta={insta}
+            historico={historico}
+            onClose={onClose}
+            onEditar={() => setModo("edit")}
+            onMandar={() => onMandarParaLari(cliente)}
+          />
+        ) : (
+          <EditMode
+            cliente={cliente}
+            onCancelar={() => setModo("view")}
+            onSalvo={(atualizado) => {
+              setCliente(atualizado);
+              setModo("view");
+              onAtualizado();
+            }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- MODO VISUALIZAÇÃO (card informativo) ---------- */
+function ViewMode({
+  cliente, wa, mail, insta, historico, onClose, onEditar, onMandar,
+}: {
+  cliente: Cliente;
+  wa: string; mail: string; insta: string;
+  historico: ContatoHist[];
+  onClose: () => void;
+  onEditar: () => void;
+  onMandar: () => void;
+}) {
+  const botaoContato = "flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-medium transition-transform hover:scale-105";
+  return (
+    <>
+      {/* Cabeçalho */}
+      <div className="flex items-start justify-between gap-2 p-5 pb-3">
+        <div className="min-w-0">
+          <h2 className="truncate text-xl font-bold">{cliente.nome}</h2>
+          <div className="mt-1.5"><EtapaBadge etapa={cliente.etapa} /></div>
+        </div>
+        <button onClick={onClose} aria-label="Fechar" className="rounded-lg p-1 text-muted hover:bg-white/10 hover:text-white">
+          <X size={20} />
+        </button>
+      </div>
+
+      {/* Contato rápido */}
+      <div className="flex gap-2 px-5 pb-4">
+        <a href={wa || undefined} target="_blank" rel="noreferrer" className={botaoContato + (wa ? " bg-[#25D366] text-white" : " glass text-muted pointer-events-none opacity-40")}>
+          <MessageCircle size={16} /> WhatsApp
+        </a>
+        <a href={mail || undefined} className={botaoContato + (mail ? " bg-primary text-primary-fg" : " glass text-muted pointer-events-none opacity-40")}>
+          <Mail size={16} /> E-mail
+        </a>
+        <a href={insta || undefined} target="_blank" rel="noreferrer" className={botaoContato + (insta ? " bg-gradient-to-br from-purple-500 to-pink-500 text-white" : " glass text-muted pointer-events-none opacity-40")}>
+          <Instagram size={16} /> Instagram
+        </a>
+      </div>
+
+      {/* Conteúdo rolável */}
+      <div className="flex-1 space-y-4 overflow-y-auto border-t border-white/10 px-5 py-4">
+        {/* Infos */}
+        <div className="space-y-2 text-sm">
+          <InfoRow icon={<Phone size={15} />} valor={cliente.telefone} vazio="Sem telefone" />
+          <InfoRow icon={<Mail size={15} />} valor={cliente.email} vazio="Sem e-mail" />
+          <InfoRow icon={<Instagram size={15} />} valor={cliente.instagram} vazio="Sem Instagram" />
+          <InfoRow icon={<Target size={15} />} valor={cliente.interesse} vazio="Interesse não informado" />
+        </div>
+
+        {/* Histórico */}
+        <div>
+          <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+            <StickyNote size={13} /> Histórico de contato
+          </h3>
+          {historico.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-white/10 px-3 py-4 text-center text-xs text-muted">
+              Nenhum contato registrado ainda.
+            </p>
+          ) : (
+            <ol className="space-y-2">
+              {historico.map((h, i) => (
+                <li key={i} className="rounded-xl bg-white/5 px-3 py-2 text-sm">
+                  <span className="text-xs font-semibold text-primary">Contato {i + 1}</span>
+                  {h.data && <span className="ml-1.5 text-xs text-muted">· {fmtDataCurta(h.data)}</span>}
+                  <p className="mt-0.5 text-slate-100">{h.texto}</p>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+
+        {/* Anotações */}
+        {cliente.observacao && (
+          <div>
+            <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">Anotações</h3>
+            <p className="whitespace-pre-wrap rounded-xl bg-white/5 px-3 py-2 text-sm text-slate-100">{cliente.observacao}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Ações fixas no rodapé */}
+      <div className="flex gap-2 border-t border-white/10 p-4">
+        <button onClick={onEditar} className="glass flex flex-1 items-center justify-center gap-1.5 rounded-xl py-3 text-sm font-medium text-white transition-transform hover:scale-[1.02]">
+          <Pencil size={16} /> Editar
+        </button>
+        <button onClick={onMandar} className="flex flex-[1.4] items-center justify-center gap-1.5 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-fg transition-transform hover:scale-[1.02]">
+          <Sparkles size={16} /> Mandar pra Lari
+        </button>
+      </div>
+    </>
+  );
+}
+
+function InfoRow({ icon, valor, vazio }: { icon: React.ReactNode; valor: string; vazio: string }) {
+  const tem = valor && valor.trim().length > 0;
+  return (
+    <div className="flex items-center gap-2">
+      <span className={tem ? "text-primary" : "text-muted/50"}>{icon}</span>
+      <span className={tem ? "text-slate-100" : "text-muted/60 italic"}>{tem ? valor : vazio}</span>
+    </div>
+  );
+}
+
+/* ---------- MODO EDIÇÃO ---------- */
+function EditMode({
+  cliente, onCancelar, onSalvo,
+}: {
+  cliente: Cliente;
+  onCancelar: () => void;
+  onSalvo: (c: Cliente) => void;
+}) {
   const [f, setF] = useState({
     nome: cliente.nome,
     telefone: cliente.telefone,
@@ -157,73 +327,95 @@ function ClienteModal({ cliente, onClose, onSalvo }: { cliente: Cliente; onClose
     etapa: cliente.etapa,
     observacao: cliente.observacao,
   });
+  const [hist, setHist] = useState<ContatoHist[]>(parseHistorico(cliente.historico));
+  const [novoContato, setNovoContato] = useState("");
   const [salvando, setSalvando] = useState(false);
   const set = (k: string, v: string) => setF((s) => ({ ...s, [k]: v }));
-  const campo = "w-full rounded-lg bg-black/30 px-3 py-2 text-sm text-white placeholder:text-muted focus:outline-none";
+
+  function addContato() {
+    const texto = novoContato.trim();
+    if (!texto) return;
+    setHist((h) => [...h, { data: new Date().toISOString(), texto }]);
+    setNovoContato("");
+  }
 
   async function salvar() {
     setSalvando(true);
-    await fetch(`/api/clientes/${cliente.id}`, {
+    const res = await fetch(`/api/clientes/${cliente.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(f),
+      body: JSON.stringify({ ...f, historico: JSON.stringify(hist) }),
     });
+    const atualizado = await res.json();
     setSalvando(false);
-    onSalvo();
+    onSalvo(atualizado);
   }
 
-  const wa = linkWhatsApp(f.telefone);
-  const mail = linkEmail(f.email);
-  const insta = linkInstagram(f.instagram);
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 p-4 backdrop-blur-md">
-      <div className="glass-strong max-h-[88vh] w-full max-w-md overflow-y-auto rounded-2xl p-6 ring-1 ring-white/10">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">Editar cliente</h2>
-          <button onClick={onClose} aria-label="Fechar" className="rounded-lg p-1 text-muted hover:bg-white/10 hover:text-white">
-            <X size={20} />
-          </button>
-        </div>
+    <>
+      <div className="flex items-center justify-between p-5 pb-3">
+        <button onClick={onCancelar} className="flex items-center gap-1.5 text-sm text-muted hover:text-white">
+          <ArrowLeft size={18} /> Voltar
+        </button>
+        <h2 className="text-base font-semibold">Editar cliente</h2>
+      </div>
 
-        {/* Contato rápido */}
-        <div className="mb-4 flex gap-2">
-          <a href={wa || undefined} target="_blank" rel="noreferrer" className={"flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-medium transition-transform hover:scale-105 " + (wa ? "bg-[#25D366] text-white" : "glass text-muted pointer-events-none opacity-40")}>
-            <MessageCircle size={16} /> WhatsApp
-          </a>
-          <a href={mail || undefined} className={"flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-medium transition-transform hover:scale-105 " + (mail ? "bg-primary text-primary-fg" : "glass text-muted pointer-events-none opacity-40")}>
-            <Mail size={16} /> E-mail
-          </a>
-          <a href={insta || undefined} target="_blank" rel="noreferrer" className={"flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-medium transition-transform hover:scale-105 " + (insta ? "bg-gradient-to-br from-purple-500 to-pink-500 text-white" : "glass text-muted pointer-events-none opacity-40")}>
-            <Instagram size={16} /> Instagram
-          </a>
-        </div>
+      <div className="flex-1 space-y-3 overflow-y-auto border-t border-white/10 px-5 py-4">
+        <input value={f.nome} onChange={(e) => set("nome", e.target.value)} placeholder="Nome" className={campo} />
+        <input value={f.telefone} onChange={(e) => set("telefone", e.target.value)} placeholder="WhatsApp / telefone" className={campo} />
+        <input value={f.email} onChange={(e) => set("email", e.target.value)} placeholder="E-mail" className={campo} />
+        <input value={f.instagram} onChange={(e) => set("instagram", e.target.value)} placeholder="Instagram (@usuario)" className={campo} />
+        <input value={f.interesse} onChange={(e) => set("interesse", e.target.value)} placeholder="🎯 Interesse (o que procura)" className={campo} />
+        <select value={f.etapa} onChange={(e) => set("etapa", e.target.value)} className={campo}>
+          {ETAPAS.map((e) => (
+            <option key={e} value={e} className="bg-surface">{e}</option>
+          ))}
+        </select>
+        <textarea value={f.observacao} onChange={(e) => set("observacao", e.target.value)} rows={3} placeholder="📝 Anotações sobre o cliente..." className={campo + " resize-none"} />
 
-        <div className="space-y-3">
-          <input value={f.nome} onChange={(e) => set("nome", e.target.value)} placeholder="Nome" className={campo} />
-          <input value={f.telefone} onChange={(e) => set("telefone", e.target.value)} placeholder="WhatsApp / telefone" className={campo} />
-          <input value={f.email} onChange={(e) => set("email", e.target.value)} placeholder="E-mail" className={campo} />
-          <input value={f.instagram} onChange={(e) => set("instagram", e.target.value)} placeholder="Instagram (@usuario)" className={campo} />
-          <input value={f.interesse} onChange={(e) => set("interesse", e.target.value)} placeholder="Interesse (o que procura)" className={campo} />
-          <select value={f.etapa} onChange={(e) => set("etapa", e.target.value)} className={campo}>
-            {ETAPAS.map((e) => (
-              <option key={e} value={e} className="bg-surface">{e}</option>
-            ))}
-          </select>
-          <textarea value={f.observacao} onChange={(e) => set("observacao", e.target.value)} rows={4} placeholder="📝 Anotações sobre o cliente / conversa..." className={campo + " resize-none"} />
+        {/* Histórico editável */}
+        <div className="pt-1">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Histórico de contato</h3>
+          {hist.length > 0 && (
+            <ol className="mb-2 space-y-1.5">
+              {hist.map((h, i) => (
+                <li key={i} className="flex items-start gap-2 rounded-lg bg-white/5 px-3 py-2 text-sm">
+                  <span className="text-xs font-semibold text-primary">Contato {i + 1}</span>
+                  <span className="flex-1 text-slate-100">{h.texto}</span>
+                  <button onClick={() => setHist((arr) => arr.filter((_, j) => j !== i))} aria-label="Remover" className="text-muted hover:text-red-400">
+                    <Trash2 size={13} />
+                  </button>
+                </li>
+              ))}
+            </ol>
+          )}
+          <div className="flex gap-2">
+            <input
+              value={novoContato}
+              onChange={(e) => setNovoContato(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addContato(); } }}
+              placeholder="Registrar novo contato..."
+              className={campo}
+            />
+            <button onClick={addContato} className="shrink-0 rounded-lg bg-white/10 px-3 text-sm text-white hover:bg-white/20">
+              <Plus size={16} />
+            </button>
+          </div>
         </div>
+      </div>
 
-        <button onClick={salvar} disabled={salvando} className="mt-4 w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-fg transition-transform hover:scale-[1.01] disabled:opacity-50">
+      <div className="border-t border-white/10 p-4">
+        <button onClick={salvar} disabled={salvando} className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-fg transition-transform hover:scale-[1.01] disabled:opacity-50">
           {salvando ? "Salvando..." : "Salvar alterações"}
         </button>
       </div>
-    </div>
+    </>
   );
 }
 
+/* ---------- NOVO CLIENTE ---------- */
 function ClienteForm({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [salvando, setSalvando] = useState(false);
-  const campo = "w-full rounded-lg bg-black/30 px-3 py-2 text-sm text-white placeholder:text-muted focus:outline-none";
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -240,7 +432,7 @@ function ClienteForm({ onClose, onCreated }: { onClose: () => void; onCreated: (
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 p-4 backdrop-blur-md">
-      <div className="glass-strong w-full max-w-md rounded-2xl p-6 ring-1 ring-white/10">
+      <div className="glass-modal w-full max-w-md rounded-3xl p-6 text-white">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Novo cliente</h2>
           <button onClick={onClose} aria-label="Fechar" className="rounded-lg p-1 text-muted hover:bg-white/10 hover:text-white">
@@ -250,7 +442,9 @@ function ClienteForm({ onClose, onCreated }: { onClose: () => void; onCreated: (
         <form onSubmit={submit} className="space-y-3">
           <input name="nome" required placeholder="Nome do cliente" className={campo} />
           <input name="telefone" placeholder="WhatsApp / telefone" className={campo} />
-          <input name="interesse" placeholder="O que procura (ex: apê 2 quartos, até 400k)" className={campo} />
+          <input name="email" placeholder="E-mail" className={campo} />
+          <input name="instagram" placeholder="Instagram (@usuario)" className={campo} />
+          <input name="interesse" placeholder="🎯 O que procura (ex: apê 2 quartos, até 400k)" className={campo} />
           <select name="etapa" defaultValue="Novo" className={campo}>
             {ETAPAS.map((e) => (
               <option key={e} value={e} className="bg-surface">{e}</option>
