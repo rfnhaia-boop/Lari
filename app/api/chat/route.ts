@@ -4,6 +4,7 @@ import { SYSTEM_PROMPT } from "@/lib/system-prompt";
 import { SKILLS } from "@/lib/skills";
 import { prisma } from "@/lib/db";
 import { formatBRL } from "@/lib/format";
+import { autorizado } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -35,6 +36,7 @@ async function contextoImoveis(): Promise<string> {
 }
 
 export async function POST(req: Request) {
+  if (!autorizado()) return new Response("Não autorizado.", { status: 401 });
   if (!process.env.GROQ_API_KEY) {
     return new Response(
       JSON.stringify({

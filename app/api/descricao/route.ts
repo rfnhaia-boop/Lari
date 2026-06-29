@@ -1,11 +1,13 @@
 import { groq } from "@ai-sdk/groq";
 import { streamText } from "ai";
 import { buildDescricaoSystem } from "@/lib/descricao/master-prompt";
+import { autorizado } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
+  if (!autorizado()) return new Response("Não autorizado.", { status: 401 });
   if (!process.env.GROQ_API_KEY) {
     return new Response("Chave da API não configurada (.env.local).", { status: 500 });
   }

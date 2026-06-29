@@ -49,6 +49,10 @@ if [[ -z "$GROQ_KEY" ]]; then
   echo "❌ GROQ_API_KEY não encontrada em $APP/.env"; exit 1
 fi
 
+# --- gera login automático desta instância ---------------------------------
+LOGIN_USER="admin"
+LOGIN_SENHA="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 8)"
+
 # --- 1) cria e migra o banco do cliente ------------------------------------
 echo "→ Criando/migrando banco $DB_FILE ..."
 cd "$APP"
@@ -67,7 +71,9 @@ module.exports = {
       NODE_ENV: "production",
       PORT: "$PORT",
       DATABASE_URL: "$DB_URL",
-      GROQ_API_KEY: "$GROQ_KEY"
+      GROQ_API_KEY: "$GROQ_KEY",
+      LARI_USUARIO: "$LOGIN_USER",
+      LARI_SENHA: "$LOGIN_SENHA"
     }
   }]
 };
@@ -107,6 +113,11 @@ certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL" --redirec
 echo ""
 echo "✅ PRONTO!"
 echo "   URL:      https://$DOMAIN"
+echo "   Usuário:  $LOGIN_USER"
+echo "   Senha:    $LOGIN_SENHA"
+echo "   ---"
 echo "   Porta:    $PORT"
 echo "   Processo: lari-$SLUG"
 echo "   Banco:    $DB_FILE"
+echo ""
+echo "   👉 Manda pro cliente:  $DOMAIN  |  login: $LOGIN_USER  |  senha: $LOGIN_SENHA"

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { autorizado } from "@/lib/auth";
 
 export async function GET(req: Request) {
+  if (!autorizado()) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   const { searchParams } = new URL(req.url);
   const imovelId = searchParams.get("imovelId");
 
@@ -15,6 +17,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  if (!autorizado()) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   const data = await req.json();
 
   if (!data.imovelId || !data.conteudo) {

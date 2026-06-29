@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { autorizado } from "@/lib/auth";
 
 export async function GET() {
+  if (!autorizado()) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   const imoveis = await prisma.imovel.findMany({
     orderBy: { criadoEm: "desc" },
   });
@@ -9,6 +11,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (!autorizado()) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   const data = await req.json();
 
   if (!data.titulo || !data.cidade) {
