@@ -433,15 +433,18 @@ function ClienteForm({ onClose, onCreated }: { onClose: () => void; onCreated: (
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 p-4 backdrop-blur-md">
-      <div className="glass-modal w-full max-w-md rounded-3xl p-6 text-white">
-        <div className="mb-4 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 p-3 backdrop-blur-md sm:p-4">
+      <form onSubmit={submit} className="glass-modal flex h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-3xl text-white">
+        {/* Cabeçalho fixo */}
+        <div className="flex items-center justify-between p-5 pb-3">
           <h2 className="text-lg font-semibold text-white">Novo cliente</h2>
-          <button onClick={onClose} aria-label="Fechar" className="rounded-lg p-1 text-muted hover:bg-white/10 hover:text-white">
+          <button type="button" onClick={onClose} aria-label="Fechar" className="rounded-lg p-1 text-muted hover:bg-white/10 hover:text-white">
             <X size={20} />
           </button>
         </div>
-        <form onSubmit={submit} className="space-y-3">
+
+        {/* Campos (rolável) */}
+        <div className="flex-1 space-y-3 overflow-y-auto border-t border-white/10 px-5 py-4">
           <input name="nome" required placeholder="Nome do cliente" className={campo} />
           <input name="telefone" placeholder="WhatsApp / telefone" className={campo} />
           <input name="email" placeholder="E-mail" className={campo} />
@@ -452,11 +455,15 @@ function ClienteForm({ onClose, onCreated }: { onClose: () => void; onCreated: (
               <option key={e} value={e} className="bg-surface">{e}</option>
             ))}
           </select>
-          <button disabled={salvando} className="w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-fg transition-transform hover:scale-[1.01] disabled:opacity-50">
+        </div>
+
+        {/* Ação fixa no rodapé */}
+        <div className="border-t border-white/10 p-4">
+          <button disabled={salvando} className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-fg transition-transform hover:scale-[1.01] disabled:opacity-50">
             {salvando ? "Salvando..." : "Adicionar ao funil"}
           </button>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>,
     document.body
   );
