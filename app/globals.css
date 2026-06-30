@@ -9,43 +9,44 @@ body {
 
 body {
   background-color: theme(colors.background);
-  color: #e8edf4;
+  color: #f5f5f5;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Liquid glass */
+/* Glass premium "quiet luxury" — sólido, sutil, com hover dourado */
 .glass {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(18px) saturate(160%);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  background: rgba(26, 29, 34, 0.82);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.30);
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+.glass:hover {
+  border-color: rgba(201, 168, 106, 0.35);
 }
 
 .glass-strong {
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  background: rgba(18, 20, 25, 0.82);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
 }
 
-/* Liquid glass do modal — translúcido de verdade, deixa o fundo borrado aparecer */
+/* Glass do modal — frosted premium, deixa o fundo aparecer sutilmente */
 .glass-modal {
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.12),
-    rgba(255, 255, 255, 0.04) 45%,
-    rgba(15, 23, 42, 0.28)
+    rgba(42, 45, 52, 0.74),
+    rgba(26, 29, 34, 0.72)
   );
-  backdrop-filter: blur(32px) saturate(180%);
-  -webkit-backdrop-filter: blur(32px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(30px) saturate(150%);
+  -webkit-backdrop-filter: blur(30px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
     0 24px 70px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    inset 0 1px 0 rgba(201, 168, 106, 0.10);
 }
 
 /* Luzes (glow) animadas — só opacidade, pra não conflitar com o posicionamento */

@@ -161,10 +161,10 @@ export function Hub({ mostrarSair = false }: { mostrarSair?: boolean }) {
 
       {/* Luzes (glow) pra dar charme */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="glow-light absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/30 blur-[90px]" />
-        <div className="glow-light glow-delay absolute left-1/4 top-1/2 h-56 w-56 rounded-full bg-cyan-400/20 blur-[90px]" />
-        <div className="glow-light glow-delay-2 absolute right-1/4 top-1/2 h-56 w-56 rounded-full bg-emerald-400/20 blur-[90px]" />
-        <div className="glow-light absolute bottom-10 left-1/2 h-40 w-[28rem] -translate-x-1/2 rounded-full bg-primary/25 blur-[80px]" />
+        <div className="glow-light absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/20 blur-[90px]" />
+        <div className="glow-light glow-delay absolute left-1/4 top-1/2 h-56 w-56 rounded-full bg-primary/10 blur-[90px]" />
+        <div className="glow-light glow-delay-2 absolute right-1/4 top-1/2 h-56 w-56 rounded-full bg-amber-200/10 blur-[90px]" />
+        <div className="glow-light absolute bottom-10 left-1/2 h-40 w-[28rem] -translate-x-1/2 rounded-full bg-primary/15 blur-[80px]" />
       </div>
 
       <div className="mx-auto flex h-[100dvh] max-w-3xl flex-col px-3 sm:px-4">

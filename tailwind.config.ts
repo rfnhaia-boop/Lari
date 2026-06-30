@@ -9,12 +9,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "hsl(222 47% 6%)",
-        surface: "hsl(222 40% 10%)",
-        border: "hsl(222 30% 18%)",
-        primary: "hsl(160 84% 39%)",
-        "primary-fg": "hsl(0 0% 100%)",
-        muted: "hsl(217 20% 60%)",
+        // Design system "quiet luxury" — fundo escuro + destaque dourado
+        background: "#0F1115",
+        surface: "#1A1D22",
+        border: "rgba(255,255,255,0.07)",
+        primary: "#C9A86A", // dourado (accent / luxo)
+        "primary-fg": "#15130E", // texto escuro sobre o dourado
+        "primary-hover": "#B89658",
+        muted: "#B8BCC5", // texto secundário
+        success: "#2BB673", // verde — só estados funcionais (sucesso/online)
       },
       keyframes: {
         "fade-in-up": {
