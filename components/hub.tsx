@@ -4,8 +4,7 @@ import { useChat } from "ai/react";
 import { useRef, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Building2,
-  Megaphone,
+  FileText,
   Video,
   MessageCircle,
   Users,
@@ -13,6 +12,7 @@ import {
   Sparkles,
   X,
   LogOut,
+  Lock,
 } from "lucide-react";
 import { ChatMessage } from "@/components/chat-message";
 import { ChatInput } from "@/components/chat-input";
@@ -42,12 +42,10 @@ interface Funcao {
 }
 
 const FUNCOES: Funcao[] = [
-  { id: "apartamento", icon: Building2, label: "Apartamento", view: "descricao" },
-  { id: "anuncio", icon: Megaphone, label: "Anúncio", view: "descricao" },
+  { icon: FileText, label: "Descrição de Imóveis", view: "descricao" },
+  { id: "whatsapp", icon: MessageCircle, label: "Assistente" },
   { id: "video", icon: Video, label: "Vídeo", premium: "videos" },
-  { id: "whatsapp", icon: MessageCircle, label: "WhatsApp" },
-  { id: "leads", icon: Users, label: "Clientes", view: "crm" },
-  { icon: Home, label: "Imóveis", view: "imoveis" },
+  { id: "leads", icon: Users, label: "Proprietários", view: "crm" },
 ];
 
 export function Hub({ mostrarSair = false }: { mostrarSair?: boolean }) {
@@ -76,11 +74,21 @@ export function Hub({ mostrarSair = false }: { mostrarSair?: boolean }) {
   }, [messages]);
 
   const conversando = messages.length > 0 || input.trim().length > 0;
+  const sugestoesAtivas = skillAtiva ? SKILLS[skillAtiva]?.sugestoes : undefined;
 
-  // Ativa uma skill: define o modo e dispara a mensagem inicial naquele contexto
+  // Ativa uma skill. Se a skill tem sugestões de prompt, só entra no modo
+  // (mostra os chips); senão, dispara a mensagem inicial daquele contexto.
   function ativarSkill(id: string) {
     setSkillAtiva(id);
-    append({ role: "user", content: SKILLS[id].starter }, { body: { skillId: id } });
+    setView("hub");
+    if (!SKILLS[id].sugestoes) {
+      append({ role: "user", content: SKILLS[id].starter }, { body: { skillId: id } });
+    }
+  }
+
+  // Envia uma sugestão de prompt (chip) no contexto da skill ativa
+  function enviarSugestao(texto: string) {
+    append({ role: "user", content: texto }, { body: { skillId: skillAtiva } });
   }
 
   // Toda mensagem digitada carrega a skill ativa no contexto.
@@ -170,31 +178,13 @@ export function Hub({ mostrarSair = false }: { mostrarSair?: boolean }) {
           </button>
           <nav className="flex items-center gap-2">
             <button
-              onClick={() => setView(view === "imoveis" ? "hub" : "imoveis")}
-              className={
-                "rounded-xl px-3 py-2 text-sm transition-transform hover:scale-105 " +
-                (view === "imoveis" ? "bg-primary text-primary-fg" : "glass text-white")
-              }
-            >
-              Imóveis
-            </button>
-            <button
-              onClick={() => setView(view === "anuncios" ? "hub" : "anuncios")}
-              className={
-                "rounded-xl px-3 py-2 text-sm transition-transform hover:scale-105 " +
-                (view === "anuncios" ? "bg-primary text-primary-fg" : "glass text-white")
-              }
-            >
-              Anúncios
-            </button>
-            <button
               onClick={() => setView(view === "crm" ? "hub" : "crm")}
               className={
                 "rounded-xl px-3 py-2 text-sm transition-transform hover:scale-105 " +
                 (view === "crm" ? "bg-primary text-primary-fg" : "glass text-white")
               }
             >
-              Clientes
+              Proprietários
             </button>
             {mostrarSair && (
               <button
@@ -229,7 +219,32 @@ export function Hub({ mostrarSair = false }: { mostrarSair?: boolean }) {
             </motion.div>
           ) : (
           <AnimatePresence mode="wait">
-            {!conversando ? (
+            {!conversando && sugestoesAtivas ? (
+              <motion.div
+                key="chips"
+                className="flex h-full flex-col items-center justify-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="mb-6 text-center">
+                  <h1 className="text-2xl font-bold text-white">{SKILLS[skillAtiva!].label}</h1>
+                  <p className="mt-2 text-sm text-muted">Escolha um atalho ou escreva sua pergunta 👇</p>
+                </div>
+                <div className="flex w-full max-w-md flex-col gap-2">
+                  {sugestoesAtivas.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => enviarSugestao(s)}
+                      className="glass rounded-2xl px-4 py-3 text-left text-sm text-white transition-transform hover:scale-[1.02] active:scale-95"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            ) : !conversando ? (
               <motion.div
                 key="hero"
                 className="flex h-full flex-col items-center justify-center"
@@ -246,26 +261,37 @@ export function Hub({ mostrarSair = false }: { mostrarSair?: boolean }) {
                   <p className="mt-2 text-sm text-muted sm:text-base">O que vamos fazer hoje?</p>
                 </motion.div>
 
-                <div className="grid w-full max-w-md grid-cols-3 gap-3 sm:gap-4">
-                  {FUNCOES.filter((f) => !f.premium || (carteira?.[f.premium] ?? 0) > 0).map((f, i) => {
+                <div className="grid w-full max-w-md grid-cols-2 gap-3 sm:gap-4">
+                  {FUNCOES.map((f, i) => {
                     const Icon = f.icon;
-                    const dir = i % 3 === 0 ? -1 : i % 3 === 2 ? 1 : 0;
+                    const dir = i % 2 === 0 ? -1 : 1;
+                    const creditos = f.premium ? (carteira?.[f.premium] ?? 0) : null;
+                    const bloqueado = f.premium ? creditos === 0 : false;
                     const conteudo = (
                       <>
-                        {f.premium && (
-                          <span className="absolute right-1.5 top-1.5 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-fg">
-                            {carteira?.[f.premium] ?? 0}
-                          </span>
-                        )}
-                        <Icon size={24} className="text-primary" />
-                        <span className="text-xs font-medium text-white">{f.label}</span>
+                        {f.premium &&
+                          (bloqueado ? (
+                            <span className="absolute right-2 top-2 text-muted">
+                              <Lock size={13} />
+                            </span>
+                          ) : (
+                            <span className="absolute right-1.5 top-1.5 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-fg">
+                              {creditos}
+                            </span>
+                          ))}
+                        <Icon size={24} className={bloqueado ? "text-muted" : "text-primary"} />
+                        <span className={"text-xs font-medium " + (bloqueado ? "text-muted" : "text-white")}>{f.label}</span>
                       </>
                     );
                     const classe =
-                      "glass relative flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-2xl transition-transform hover:scale-105 active:scale-95";
+                      "glass relative flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-2xl transition-transform hover:scale-105 active:scale-95" +
+                      (bloqueado ? " opacity-70" : "");
 
                     function handle() {
-                      if (f.premium) return usarPremium(f.id!, f.premium);
+                      if (f.premium) {
+                        if (bloqueado) return setRoletaAberta(true); // desbloqueia girando a roleta
+                        return usarPremium(f.id!, f.premium);
+                      }
                       if (f.view) return setView(f.view);
                       if (f.id) return ativarSkill(f.id);
                     }

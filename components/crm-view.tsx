@@ -58,9 +58,9 @@ export function CrmView({ onMandarParaLari }: { onMandarParaLari?: (c: Cliente) 
           </div>
           <p className="text-sm text-slate-100">
             {emAndamento.length > 0 ? (
-              <>Você tem <span className="font-semibold text-primary">{emAndamento.length} cliente(s)</span> em andamento no funil. Que tal dar um retorno pros que estão parados em <span className="font-medium">Contato</span> ou <span className="font-medium">Visita</span>? 👇</>
+              <>Você tem <span className="font-semibold text-primary">{emAndamento.length} proprietário(s)</span> em andamento no funil. Que tal dar um retorno pros que estão parados em <span className="font-medium">Contato</span> ou <span className="font-medium">Visita</span>? 👇</>
             ) : (
-              <>Seu funil tem {clientes.length} cliente(s). Bora mover quem avançou pra próxima etapa! 🚀</>
+              <>Seu funil tem {clientes.length} proprietário(s). Bora mover quem avançou pra próxima etapa! 🚀</>
             )}
           </p>
         </div>
@@ -71,7 +71,7 @@ export function CrmView({ onMandarParaLari }: { onMandarParaLari?: (c: Cliente) 
         onClick={() => setFormAberto(true)}
         className="glass flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-medium text-white transition-transform hover:scale-[1.01] active:scale-95"
       >
-        <Plus size={18} className="text-primary" /> Novo cliente
+        <Plus size={18} className="text-primary" /> Novo proprietário
       </button>
 
       {/* Kanban */}
@@ -181,6 +181,20 @@ function ClienteModal({
   const insta = linkInstagram(cliente.instagram);
   const historico = parseHistorico(cliente.historico);
 
+  // Adiciona um contato no histórico na hora (sem entrar no modo editar)
+  async function addContato(texto: string) {
+    const novo = [...parseHistorico(cliente.historico), { data: new Date().toISOString(), texto }];
+    const res = await fetch(`/api/clientes/${cliente.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ historico: JSON.stringify(novo) }),
+    });
+    if (res.ok) {
+      setCliente(await res.json());
+      onAtualizado();
+    }
+  }
+
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 p-3 backdrop-blur-md sm:p-4">
       <div className="glass-modal flex h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-3xl text-white">
@@ -192,6 +206,7 @@ function ClienteModal({
             onClose={onClose}
             onEditar={() => setModo("edit")}
             onMandar={() => onMandarParaLari(cliente)}
+            onAddContato={addContato}
           />
         ) : (
           <EditMode
@@ -212,7 +227,7 @@ function ClienteModal({
 
 /* ---------- MODO VISUALIZAÇÃO (card informativo) ---------- */
 function ViewMode({
-  cliente, wa, mail, insta, historico, onClose, onEditar, onMandar,
+  cliente, wa, mail, insta, historico, onClose, onEditar, onMandar, onAddContato,
 }: {
   cliente: Cliente;
   wa: string; mail: string; insta: string;
@@ -220,8 +235,20 @@ function ViewMode({
   onClose: () => void;
   onEditar: () => void;
   onMandar: () => void;
+  onAddContato: (texto: string) => Promise<void>;
 }) {
+  const [nota, setNota] = useState("");
+  const [salvandoNota, setSalvandoNota] = useState(false);
   const botaoContato = "flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-medium transition-transform hover:scale-105";
+
+  async function adicionar() {
+    const texto = nota.trim();
+    if (!texto || salvandoNota) return;
+    setSalvandoNota(true);
+    await onAddContato(texto);
+    setNota("");
+    setSalvandoNota(false);
+  }
   return (
     <>
       {/* Cabeçalho */}
@@ -278,6 +305,25 @@ function ViewMode({
               ))}
             </ol>
           )}
+
+          {/* Adicionar nota na hora (sem entrar no editar) */}
+          <div className="mt-2 flex gap-2">
+            <input
+              value={nota}
+              onChange={(e) => setNota(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); adicionar(); } }}
+              placeholder="Anotar um contato/observação..."
+              className="w-full rounded-lg bg-black/30 px-3 py-2 text-sm text-white placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-primary/50"
+            />
+            <button
+              onClick={adicionar}
+              disabled={!nota.trim() || salvandoNota}
+              aria-label="Adicionar nota"
+              className="shrink-0 rounded-lg bg-primary px-3 text-primary-fg transition-transform hover:scale-105 disabled:opacity-40"
+            >
+              <Plus size={16} />
+            </button>
+          </div>
         </div>
 
         {/* Anotações */}
@@ -359,7 +405,7 @@ function EditMode({
         <button onClick={onCancelar} className="flex items-center gap-1.5 text-sm text-muted hover:text-white">
           <ArrowLeft size={18} /> Voltar
         </button>
-        <h2 className="text-base font-semibold">Editar cliente</h2>
+        <h2 className="text-base font-semibold">Editar proprietário</h2>
       </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto border-t border-white/10 px-5 py-4">
@@ -373,7 +419,7 @@ function EditMode({
             <option key={e} value={e} className="bg-surface">{e}</option>
           ))}
         </select>
-        <textarea value={f.observacao} onChange={(e) => set("observacao", e.target.value)} rows={3} placeholder="📝 Anotações sobre o cliente..." className={campo + " resize-none"} />
+        <textarea value={f.observacao} onChange={(e) => set("observacao", e.target.value)} rows={3} placeholder="📝 Anotações sobre o proprietário..." className={campo + " resize-none"} />
 
         {/* Histórico editável */}
         <div className="pt-1">
@@ -437,7 +483,7 @@ function ClienteForm({ onClose, onCreated }: { onClose: () => void; onCreated: (
       <form onSubmit={submit} className="glass-modal flex h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-3xl text-white">
         {/* Cabeçalho fixo */}
         <div className="flex items-center justify-between p-5 pb-3">
-          <h2 className="text-lg font-semibold text-white">Novo cliente</h2>
+          <h2 className="text-lg font-semibold text-white">Novo proprietário</h2>
           <button type="button" onClick={onClose} aria-label="Fechar" className="rounded-lg p-1 text-muted hover:bg-white/10 hover:text-white">
             <X size={20} />
           </button>
@@ -445,7 +491,7 @@ function ClienteForm({ onClose, onCreated }: { onClose: () => void; onCreated: (
 
         {/* Campos (rolável) */}
         <div className="flex-1 space-y-3 overflow-y-auto border-t border-white/10 px-5 py-4">
-          <input name="nome" required placeholder="Nome do cliente" className={campo} />
+          <input name="nome" required placeholder="Nome do proprietário" className={campo} />
           <input name="telefone" placeholder="WhatsApp / telefone" className={campo} />
           <input name="email" placeholder="E-mail" className={campo} />
           <input name="instagram" placeholder="Instagram (@usuario)" className={campo} />

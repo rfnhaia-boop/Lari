@@ -139,7 +139,7 @@ export function DescricaoChat() {
           {/* Virar cliente no funil */}
           {clienteFase === "ask" && (
             <div className="space-y-2">
-              <Bolha role="lari">Esse anúncio é pra um cliente real? Posso adicionar no seu funil. 🎯</Bolha>
+              <Bolha role="lari">Você deseja adicionar esse proprietário no funil? 🎯</Bolha>
               <div className="flex gap-2">
                 <button onClick={() => setClienteFase("form")} className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-fg">Sim, adicionar</button>
                 <button onClick={() => setClienteFase(null)} className="rounded-full glass px-4 py-2 text-sm text-white">Agora não</button>
@@ -148,7 +148,7 @@ export function DescricaoChat() {
           )}
           {clienteFase === "form" && <ClienteRapido onSalvar={salvarCliente} />}
           {clienteFase === "saved" && (
-            <Bolha role="lari">Pronto! Adicionei <span className="font-semibold">{clienteSalvo}</span> no funil em <span className="text-primary">Novo</span>. Acompanhe em “Clientes”. ✅</Bolha>
+            <Bolha role="lari">Pronto! Adicionei <span className="font-semibold">{clienteSalvo}</span> no funil em <span className="text-primary">Novo</span>. Acompanhe em “Proprietários”. ✅</Bolha>
           )}
         </div>
       )}
@@ -170,7 +170,7 @@ function ClienteRapido({ onSalvar }: { onSalvar: (nome: string, telefone: string
   const campo = "w-full rounded-lg bg-black/30 px-3 py-2 text-sm text-white placeholder:text-muted focus:outline-none";
   return (
     <div className="glass space-y-3 rounded-2xl p-4">
-      <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do cliente" className={campo} />
+      <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do proprietário" className={campo} />
       <input value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="WhatsApp / telefone" className={campo} />
       <button
         onClick={() => nome.trim() && onSalvar(nome, telefone)}

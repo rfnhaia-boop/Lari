@@ -6,6 +6,7 @@ export interface LariSkill {
   label: string;
   system: string;
   starter: string; // mensagem inicial enviada ao ativar a skill
+  sugestoes?: string[]; // prompts prontos exibidos ao abrir (se houver, não auto-envia)
 }
 
 export const SKILLS: Record<string, LariSkill> = {
@@ -28,10 +29,16 @@ export const SKILLS: Record<string, LariSkill> = {
       "MODO ATIVO: ROTEIRISTA DE VÍDEO. Crie roteiros curtos e dinâmicos para vídeos de imóveis (Reels/Shorts, 15-30s). Estruture em cenas com indicação do que mostrar na tela e o texto da narração/legenda. Tom envolvente, feito para reter atenção nos primeiros segundos.",
   },
   whatsapp: {
-    label: "WhatsApp",
-    starter: "Escreve uma mensagem de WhatsApp pra um cliente.",
+    label: "Assistente Imobiliário",
+    starter: "Quero ajuda pra escrever uma mensagem pra um cliente.",
+    sugestoes: [
+      "Escreva uma mensagem perguntando se o cliente gostou do imóvel",
+      "Crie uma mensagem de follow-up para um cliente que não respondeu",
+      "Como responder um cliente interessado em agendar visita?",
+      "Escreva uma mensagem apresentando um novo imóvel para um cliente",
+    ],
     system:
-      "MODO ATIVO: MENSAGENS DE WHATSAPP. Escreva mensagens curtas, pessoais e que geram resposta para clientes e leads. Tom cordial e direto, poucos emojis, sempre terminando com um próximo passo claro (agendar visita, enviar mais fotos). Pergunte o contexto do cliente se necessário.",
+      "MODO ATIVO: ASSISTENTE IMOBILIÁRIO. Você ajuda o corretor a se comunicar com clientes (WhatsApp e conversas comerciais). Escreva mensagens curtas, pessoais e que geram resposta. Tom cordial e direto, poucos emojis, sempre terminando com um próximo passo claro (agendar visita, enviar mais fotos). Pergunte o contexto do cliente se necessário.",
   },
   leads: {
     label: "Leads",
