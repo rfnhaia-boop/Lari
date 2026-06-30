@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   Plus, Trash2, ChevronLeft, ChevronRight, Phone, X, Sparkles,
   MessageCircle, Mail, Instagram, Pencil, Target, ArrowLeft, StickyNote,
@@ -180,7 +181,7 @@ function ClienteModal({
   const insta = linkInstagram(cliente.instagram);
   const historico = parseHistorico(cliente.historico);
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 p-3 backdrop-blur-md sm:p-4">
       <div className="glass-modal flex h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-3xl text-white">
         {modo === "view" ? (
@@ -204,7 +205,8 @@ function ClienteModal({
           />
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -430,7 +432,7 @@ function ClienteForm({ onClose, onCreated }: { onClose: () => void; onCreated: (
     onCreated();
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 p-4 backdrop-blur-md">
       <div className="glass-modal w-full max-w-md rounded-3xl p-6 text-white">
         <div className="mb-4 flex items-center justify-between">
@@ -455,6 +457,7 @@ function ClienteForm({ onClose, onCreated }: { onClose: () => void; onCreated: (
           </button>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

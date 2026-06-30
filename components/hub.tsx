@@ -83,8 +83,10 @@ export function Hub({ mostrarSair = false }: { mostrarSair?: boolean }) {
     append({ role: "user", content: SKILLS[id].starter }, { body: { skillId: id } });
   }
 
-  // Toda mensagem digitada carrega a skill ativa no contexto
+  // Toda mensagem digitada carrega a skill ativa no contexto.
+  // Se estiver em outra view, volta pro hub pra mostrar a conversa.
   function enviar(e: React.FormEvent) {
+    if (view !== "hub") setView("hub");
     handleSubmit(e, { body: { skillId: skillAtiva } });
   }
 
@@ -311,8 +313,7 @@ export function Hub({ mostrarSair = false }: { mostrarSair?: boolean }) {
           )}
         </div>
 
-        {/* Chat (só no hub) */}
-        {view === "hub" && (
+        {/* Chat — sempre visível, em qualquer view (a Lari acompanha tudo) */}
         <div className="pb-5 pt-2">
           {/* Badge da skill ativa */}
           <AnimatePresence>
@@ -339,7 +340,6 @@ export function Hub({ mostrarSair = false }: { mostrarSair?: boolean }) {
             onSubmit={enviar}
           />
         </div>
-        )}
       </div>
 
       {/* Balãozinho de créditos (some ao zerar) */}
