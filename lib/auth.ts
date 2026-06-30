@@ -1,37 +1,12 @@
 import { cookies } from "next/headers";
 import crypto from "crypto";
 
-// Login simples, 1 conta por instância (definida no .env: LARI_USUARIO / LARI_SENHA).
-// Sem e-mail, sem cadastro. Cada imobiliária = uma instância = um login.
+// Autenticação multi-tenant: usuários no banco (e-mail + senha), sessão por
+// cookie assinado contendo usuarioId + contaId. É o contaId que isola os dados.
 
-export const COOKIE = "lari_auth";
+export const COOKIE = "lari_sessao";
 const MAX_AGE = 60 * 60 * 24 * 30; // 30 dias
-
-// Há credenciais configuradas? Se não, o app fica aberto (modo dev/sem trava).
-export function autenticacaoAtiva(): boolean {
-  return Boolean(process.env.LARI_USUARIO && process.env.LARI_SENHA);
-}
-
-// Token derivado da senha — não guardamos a senha no cookie.
-export function tokenEsperado(): string {
-  const u = process.env.LARI_USUARIO || "";
-  const s = process.env.LARI_SENHA || "";
-  return crypto.createHash("sha256").update(`${u}:${s}:lari-auth-v1`).digest("hex");
-}
-
-export function checaCredenciais(usuario: string, senha: string): boolean {
-  return (
-    autenticacaoAtiva() &&
-    usuario === process.env.LARI_USUARIO &&
-    senha === process.env.LARI_SENHA
-  );
-}
-
-// Está logado? (lê o cookie). Roda no servidor (Server Component / Route Handler).
-export function autorizado(): boolean {
-  if (!autenticacaoAtiva()) return true; // sem credenciais = liberado
-  return cookies().get(COOKIE)?.value === tokenEsperado();
-}
+const SECRET = process.env.AUTH_SECRET || "dev-secret-troque-em-producao";
 
 export const cookieOptions = {
   httpOnly: true,
@@ -40,3 +15,55 @@ export const cookieOptions = {
   path: "/",
   maxAge: MAX_AGE,
 };
+
+// ---------- Senha (scrypt nativo, sem dependência) ----------
+export function hashSenha(senha: string): string {
+  const salt = crypto.randomBytes(16);
+  const hash = crypto.scryptSync(senha, salt, 64);
+  return `${salt.toString("hex")}:${hash.toString("hex")}`;
+}
+
+export function verificarSenha(senha: string, armazenado: string): boolean {
+  const [saltHex, hashHex] = (armazenado || "").split(":");
+  if (!saltHex || !hashHex) return false;
+  const hash = Buffer.from(hashHex, "hex");
+  const teste = crypto.scryptSync(senha, Buffer.from(saltHex, "hex"), 64);
+  return hash.length === teste.length && crypto.timingSafeEqual(hash, teste);
+}
+
+// ---------- Sessão (cookie assinado com HMAC) ----------
+export interface Sessao {
+  usuarioId: string;
+  contaId: string;
+}
+
+export function assinarSessao(s: Sessao): string {
+  const payload = Buffer.from(JSON.stringify(s)).toString("base64url");
+  const sig = crypto.createHmac("sha256", SECRET).update(payload).digest("base64url");
+  return `${payload}.${sig}`;
+}
+
+export function lerSessao(): Sessao | null {
+  const raw = cookies().get(COOKIE)?.value;
+  if (!raw) return null;
+  const [payload, sig] = raw.split(".");
+  if (!payload || !sig) return null;
+  const esperado = crypto.createHmac("sha256", SECRET).update(payload).digest("base64url");
+  const a = Buffer.from(sig);
+  const b = Buffer.from(esperado);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+  try {
+    return JSON.parse(Buffer.from(payload, "base64url").toString()) as Sessao;
+  } catch {
+    return null;
+  }
+}
+
+export function autorizado(): boolean {
+  return lerSessao() !== null;
+}
+
+// Conta do usuário logado — usada pelas APIs pra isolar os dados (Módulo 4).
+export function contaAtual(): string | null {
+  return lerSessao()?.contaId ?? null;
+}

@@ -4,13 +4,13 @@ import { SYSTEM_PROMPT } from "@/lib/system-prompt";
 import { SKILLS } from "@/lib/skills";
 import { prisma } from "@/lib/db";
 import { formatBRL } from "@/lib/format";
-import { autorizado } from "@/lib/auth";
+import { contaAtual } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-async function contextoImoveis(): Promise<string> {
-  const imoveis = await prisma.imovel.findMany({ orderBy: { criadoEm: "desc" } });
+async function contextoImoveis(contaId: string): Promise<string> {
+  const imoveis = await prisma.imovel.findMany({ where: { contaId }, orderBy: { criadoEm: "desc" } });
 
   if (imoveis.length === 0) {
     return "\n\nO usuário ainda NÃO tem imóveis cadastrados no sistema. Se ele pedir um anúncio sem dar os dados, peça as informações ou sugira que cadastre o imóvel primeiro.";
@@ -36,7 +36,8 @@ async function contextoImoveis(): Promise<string> {
 }
 
 export async function POST(req: Request) {
-  if (!autorizado()) return new Response("Não autorizado.", { status: 401 });
+  const contaId = contaAtual();
+  if (!contaId) return new Response("Não autorizado.", { status: 401 });
   if (!process.env.GROQ_API_KEY) {
     return new Response(
       JSON.stringify({
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
   const skill = skillId ? SKILLS[skillId] : null;
   const blocoSkill = skill ? `\n\n${skill.system}` : "";
 
-  const system = SYSTEM_PROMPT + blocoSkill + (await contextoImoveis());
+  const system = SYSTEM_PROMPT + blocoSkill + (await contextoImoveis(contaId));
 
   const result = streamText({
     model: groq("llama-3.3-70b-versatile"),

@@ -1,17 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { autorizado } from "@/lib/auth";
+import { contaAtual } from "@/lib/auth";
 
 export async function GET() {
-  if (!autorizado()) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+  const contaId = contaAtual();
+  if (!contaId) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   const imoveis = await prisma.imovel.findMany({
+    where: { contaId },
     orderBy: { criadoEm: "desc" },
   });
   return NextResponse.json(imoveis);
 }
 
 export async function POST(req: Request) {
-  if (!autorizado()) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+  const contaId = contaAtual();
+  if (!contaId) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   const data = await req.json();
 
   if (!data.titulo || !data.cidade) {
@@ -23,6 +26,7 @@ export async function POST(req: Request) {
 
   const imovel = await prisma.imovel.create({
     data: {
+      contaId,
       titulo: String(data.titulo),
       tipo: String(data.tipo ?? "apartamento"),
       finalidade: String(data.finalidade ?? "venda"),

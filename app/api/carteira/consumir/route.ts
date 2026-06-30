@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { autorizado } from "@/lib/auth";
+import { contaAtual } from "@/lib/auth";
 
 // Consome 1 crédito de um tipo (ex: videos). Não deixa ficar negativo.
 export async function POST(req: Request) {
-  if (!autorizado()) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+  const contaId = contaAtual();
+  if (!contaId) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   const { tipo } = await req.json();
   const campo = String(tipo ?? "videos");
 
   const carteira = await prisma.carteira.upsert({
-    where: { id: "default" },
+    where: { contaId },
     update: {},
-    create: { id: "default" },
+    create: { contaId },
   });
 
   const atual = (carteira as Record<string, unknown>)[campo];
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
   }
 
   const atualizada = await prisma.carteira.update({
-    where: { id: "default" },
+    where: { contaId },
     data: { [campo]: { decrement: 1 } },
   });
 

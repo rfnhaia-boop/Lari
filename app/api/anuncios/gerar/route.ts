@@ -2,7 +2,7 @@ import { groq } from "@ai-sdk/groq";
 import { streamText } from "ai";
 import { prisma } from "@/lib/db";
 import { formatBRL } from "@/lib/format";
-import { autorizado } from "@/lib/auth";
+import { contaAtual } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -17,14 +17,15 @@ const INSTRUCOES_CANAL: Record<string, string> = {
 };
 
 export async function POST(req: Request) {
-  if (!autorizado()) return new Response("Não autorizado.", { status: 401 });
+  const contaId = contaAtual();
+  if (!contaId) return new Response("Não autorizado.", { status: 401 });
   if (!process.env.GROQ_API_KEY) {
     return new Response("Chave da API não configurada (.env.local).", { status: 500 });
   }
 
   const { imovelId, canal } = await req.json();
 
-  const imovel = await prisma.imovel.findUnique({ where: { id: imovelId } });
+  const imovel = await prisma.imovel.findFirst({ where: { id: imovelId, contaId } });
   if (!imovel) {
     return new Response("Imóvel não encontrado.", { status: 404 });
   }
