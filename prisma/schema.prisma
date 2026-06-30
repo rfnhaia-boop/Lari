@@ -7,8 +7,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Cada imobiliária = uma Conta (tenant). Todo dado pertence a uma Conta.
+model Conta {
+  id        String    @id @default(cuid())
+  nome      String // nome da imobiliária
+  plano     String    @default("trial") // trial, pessoal, empresarial (base p/ Asaas)
+  status    String    @default("ativo") // ativo, suspenso (base p/ Asaas)
+  criadoEm  DateTime  @default(now())
+  usuarios  Usuario[]
+  imoveis   Imovel[]
+  anuncios  Anuncio[]
+  clientes  Cliente[]
+  carteira  Carteira?
+}
+
+model Usuario {
+  id        String   @id @default(cuid())
+  conta     Conta    @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  contaId   String
+  nome      String
+  email     String   @unique
+  senhaHash String
+  papel     String   @default("admin") // admin (dono) | corretor
+  criadoEm  DateTime @default(now())
+
+  @@index([contaId])
+}
+
 model Imovel {
   id          String    @id @default(cuid())
+  conta       Conta     @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  contaId     String
   titulo      String
   tipo        String    // apartamento, casa, terreno, comercial...
   finalidade  String    @default("venda") // venda ou aluguel
@@ -22,19 +51,27 @@ model Imovel {
   descricao   String    @default("")
   criadoEm    DateTime  @default(now())
   anuncios    Anuncio[]
+
+  @@index([contaId])
 }
 
 model Anuncio {
   id        String   @id @default(cuid())
+  conta     Conta    @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  contaId   String
   canal     String   // instagram, whatsapp, portal
   conteudo  String
   imovel    Imovel   @relation(fields: [imovelId], references: [id], onDelete: Cascade)
   imovelId  String
   criadoEm  DateTime @default(now())
+
+  @@index([contaId])
 }
 
 model Cliente {
   id         String   @id @default(cuid())
+  conta      Conta    @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  contaId    String
   nome       String
   telefone   String   @default("")
   email      String   @default("")
@@ -45,10 +82,14 @@ model Cliente {
   historico  String   @default("") // JSON: [{data, texto}] histórico de contatos
   criadoEm   DateTime @default(now())
   atualizado DateTime @updatedAt
+
+  @@index([contaId])
 }
 
 model Carteira {
-  id         String    @id @default("default")
+  id         String    @id @default(cuid())
+  conta      Conta     @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  contaId    String    @unique
   videos     Int       @default(0)
   leads      Int       @default(0)
   descricoes Int       @default(0)
