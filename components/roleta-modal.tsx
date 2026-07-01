@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Gift, X, Loader2 } from "lucide-react";
+import { Gift, X, Loader2, Volume2, VolumeX } from "lucide-react";
 import type { Premio } from "@/lib/roleta";
+import { somClique, somGirando, somPremio, somSemBonus, sonsHabilitados, setSons } from "@/lib/sons";
 
 interface RoletaModalProps {
   onClose: () => void;
@@ -15,9 +16,19 @@ export function RoletaModal({ onClose, onGanhou }: RoletaModalProps) {
   const [girando, setGirando] = useState(false);
   const [premio, setPremio] = useState<Premio | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [somOn, setSomOn] = useState(true);
+
+  useEffect(() => setSomOn(sonsHabilitados()), []);
+  function toggleSom() {
+    const novo = !somOn;
+    setSomOn(novo);
+    setSons(novo);
+    if (novo) somClique(); // feedback ao religar
+  }
 
   async function girar() {
     if (girando || premio) return;
+    somClique();
     setGirando(true);
     setErro(null);
 
@@ -33,10 +44,14 @@ export function RoletaModal({ onClose, onGanhou }: RoletaModalProps) {
     // gira várias voltas + um ângulo aleatório (visual)
     const destino = rotation + 360 * 6 + Math.floor(Math.random() * 360);
     setRotation(destino);
+    const pararTique = somGirando();
 
     setTimeout(() => {
+      pararTique();
       setPremio(p);
       setGirando(false);
+      if (p.tipo === "nada") somSemBonus();
+      else somPremio();
       onGanhou?.();
     }, 4200);
   }
@@ -48,6 +63,14 @@ export function RoletaModal({ onClose, onGanhou }: RoletaModalProps) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         className="glass-strong relative w-full max-w-sm rounded-3xl p-6 text-center"
       >
+        <button
+          onClick={toggleSom}
+          aria-label={somOn ? "Desativar sons" : "Ativar sons"}
+          title={somOn ? "Sons ligados" : "Sons desligados"}
+          className="absolute left-4 top-4 z-10 rounded-lg p-1 text-muted hover:bg-white/10 hover:text-white"
+        >
+          {somOn ? <Volume2 size={18} /> : <VolumeX size={18} />}
+        </button>
         <button onClick={onClose} aria-label="Fechar" className="absolute right-4 top-4 z-10 rounded-lg p-1 text-muted hover:bg-white/10 hover:text-white">
           <X size={20} />
         </button>
