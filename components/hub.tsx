@@ -13,6 +13,7 @@ import {
   X,
   LogOut,
   Lock,
+  Calculator,
 } from "lucide-react";
 import { ChatMessage } from "@/components/chat-message";
 import { ChatInput } from "@/components/chat-input";
@@ -22,6 +23,7 @@ import { DescricaoChat } from "@/components/descricao-chat";
 import { RoletaModal } from "@/components/roleta-modal";
 import { CrmView } from "@/components/crm-view";
 import { LimitesCards } from "@/components/limites-cards";
+import { ComissaoModal } from "@/components/comissao-modal";
 import { SKILLS } from "@/lib/skills";
 import { type Cliente, parseHistorico, fmtDataCurta } from "@/lib/crm";
 
@@ -47,6 +49,7 @@ interface Funcao {
   label: string;
   view?: View; // abre uma view inline em vez de skill
   premium?: "videos"; // consome crédito; some quando zera
+  action?: "comissao"; // abre um modal específico (calculadora de comissão etc.)
 }
 
 const FUNCOES: Funcao[] = [
@@ -54,6 +57,7 @@ const FUNCOES: Funcao[] = [
   { id: "whatsapp", icon: MessageCircle, label: "Assistente" },
   { id: "video", icon: Video, label: "Vídeo", premium: "videos" },
   { id: "leads", icon: Users, label: "Proprietários", view: "crm" },
+  { icon: Calculator, label: "Comissão", action: "comissao" },
 ];
 
 export function Hub({ mostrarSair = false }: { mostrarSair?: boolean }) {
@@ -64,6 +68,7 @@ export function Hub({ mostrarSair = false }: { mostrarSair?: boolean }) {
   const [view, setView] = useState<View>("hub");
   const [carteira, setCarteira] = useState<Carteira | null>(null);
   const [roletaAberta, setRoletaAberta] = useState(false);
+  const [comissaoAberta, setComissaoAberta] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   async function carregarCarteira(abrirSePuder = false) {
@@ -303,6 +308,7 @@ export function Hub({ mostrarSair = false }: { mostrarSair?: boolean }) {
                       (bloqueado ? " opacity-70" : "");
 
                     function handle() {
+                      if (f.action === "comissao") return setComissaoAberta(true);
                       if (f.premium) {
                         if (bloqueado) return setRoletaAberta(true); // desbloqueia girando a roleta
                         return usarPremium(f.id!, f.premium);
@@ -415,6 +421,8 @@ export function Hub({ mostrarSair = false }: { mostrarSair?: boolean }) {
           onGanhou={() => carregarCarteira(false)}
         />
       )}
+
+      {comissaoAberta && <ComissaoModal onClose={() => setComissaoAberta(false)} />}
     </main>
   );
 }
