@@ -79,7 +79,12 @@ export function RoletaModal({ onClose, onGanhou }: RoletaModalProps) {
         {premio ? (
           <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="space-y-3">
             <p className="text-lg font-bold text-white">
-              {premio.emoji} Você ganhou <span className="text-primary">{premio.label}</span>!
+              {premio.emoji}{" "}
+              {premio.tipo === "nada" ? (
+                <>Hoje não veio bônus. Volte amanhã!</>
+              ) : (
+                <>Você ganhou <span className="text-primary">{premio.label}</span>!</>
+              )}
             </p>
             <button onClick={onClose} className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-fg transition-transform hover:scale-[1.02]">
               Começar a usar

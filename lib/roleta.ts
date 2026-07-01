@@ -1,19 +1,22 @@
-// Prêmios da roleta diária. A ordem define os segmentos da roda (mesmo índice no servidor e no cliente).
+// Prêmios da roleta diária.
+// Conforme o doc do sócio: 4 prêmios (vídeo, +5 interações, +1 descrição, sem bônus).
+// Cada bônus soma no LIMITE MENSAL da conta (não é crédito isolado).
 
-export type TipoPremio = "videos" | "leads" | "descricoes";
+export type TipoPremio = "video" | "interacoes" | "descricoes" | "nada";
 
 export interface Premio {
   tipo: TipoPremio;
-  qtd: number;
+  qtd: number; // pra "nada" = 0
   label: string;
   emoji: string;
   peso: number; // chance relativa de sair
 }
 
 export const PREMIOS: Premio[] = [
-  { tipo: "videos", qtd: 2, label: "2 gerações de vídeo", emoji: "🎬", peso: 4 },
-  { tipo: "videos", qtd: 1, label: "1 geração de vídeo", emoji: "🎬", peso: 4 },
-  { tipo: "videos", qtd: 3, label: "3 gerações de vídeo", emoji: "🎬", peso: 2 },
+  { tipo: "interacoes", qtd: 5, label: "+5 interações com a IA",     emoji: "💬", peso: 4 },
+  { tipo: "descricoes", qtd: 1, label: "+1 descrição de imóvel",     emoji: "📝", peso: 3 },
+  { tipo: "video",      qtd: 1, label: "1 vídeo do imóvel com IA",   emoji: "🎬", peso: 2 },
+  { tipo: "nada",       qtd: 0, label: "Sem bônus hoje",             emoji: "🎲", peso: 1 },
 ];
 
 export function sortearIndice(): number {

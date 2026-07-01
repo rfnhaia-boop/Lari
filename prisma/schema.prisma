@@ -86,12 +86,25 @@ model Cliente {
   @@index([contaId])
 }
 
+// Carteira agora guarda: uso no mês, bônus da roleta e vídeos (recurso à parte).
+// Limite final por recurso = base do plano + bônus. Ver lib/limites.ts.
 model Carteira {
-  id         String    @id @default(cuid())
-  conta      Conta     @relation(fields: [contaId], references: [id], onDelete: Cascade)
-  contaId    String    @unique
-  videos     Int       @default(0)
-  leads      Int       @default(0)
-  descricoes Int       @default(0)
-  ultimoGiro DateTime?
+  id                 String    @id @default(cuid())
+  conta              Conta     @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  contaId            String    @unique
+
+  // uso no mês (reseta no primeiro giro de um novo mês)
+  descricoesUsadas   Int       @default(0)
+  interacoesUsadas   Int       @default(0)
+  cicloMes           Int       @default(0) // 1-12, mês do ciclo atual (0 = ainda não iniciado)
+  cicloAno           Int       @default(0)
+
+  // bônus da roleta que se somam ao limite base do mês
+  bonusDescricoes    Int       @default(0)
+  bonusInteracoes    Int       @default(0)
+
+  // vídeos são créditos separados (recurso especial, não tem limite mensal)
+  videos             Int       @default(0)
+
+  ultimoGiro         DateTime?
 }

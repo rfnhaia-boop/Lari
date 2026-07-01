@@ -21,14 +21,22 @@ import { AnunciosView } from "@/components/anuncios-view";
 import { DescricaoChat } from "@/components/descricao-chat";
 import { RoletaModal } from "@/components/roleta-modal";
 import { CrmView } from "@/components/crm-view";
+import { LimitesCards } from "@/components/limites-cards";
 import { SKILLS } from "@/lib/skills";
 import { type Cliente, parseHistorico, fmtDataCurta } from "@/lib/crm";
 
+interface RecursoLimite {
+  usadas: number; base: number; bonus: number; limite: number; restante: number;
+}
 interface Carteira {
   videos: number;
-  leads: number;
-  descricoes: number;
   podeGirar: boolean;
+  limites?: {
+    plano: string;
+    descricoes: RecursoLimite;
+    interacoes: RecursoLimite;
+    videos: number;
+  };
 }
 
 type View = "hub" | "imoveis" | "anuncios" | "descricao" | "crm";
@@ -72,6 +80,13 @@ export function Hub({ mostrarSair = false }: { mostrarSair?: boolean }) {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
+
+  // Toda vez que o chat para de streamar (isLoading true→false), recarrega
+  // os limites — pra refletir a interação consumida na barra do dashboard.
+  useEffect(() => {
+    if (!isLoading && messages.length > 0) carregarCarteira(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
 
   const conversando = messages.length > 0 || input.trim().length > 0;
   const sugestoesAtivas = skillAtiva ? SKILLS[skillAtiva]?.sugestoes : undefined;
@@ -315,6 +330,16 @@ export function Hub({ mostrarSair = false }: { mostrarSair?: boolean }) {
                     );
                   })}
                 </div>
+
+                {/* Limites de uso (contador X/Y + barra) */}
+                {carteira?.limites && (
+                  <div className="mt-5 w-full max-w-md">
+                    <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
+                      Seus limites de uso
+                    </h3>
+                    <LimitesCards limites={carteira.limites} />
+                  </div>
+                )}
               </motion.div>
             ) : (
               <motion.div

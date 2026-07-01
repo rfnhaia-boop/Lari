@@ -1,15 +1,28 @@
 import { groq } from "@ai-sdk/groq";
 import { streamText } from "ai";
 import { buildDescricaoSystem } from "@/lib/descricao/master-prompt";
-import { autorizado } from "@/lib/auth";
+import { contaAtual } from "@/lib/auth";
+import { consumir } from "@/lib/limites";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  if (!autorizado()) return new Response("Não autorizado.", { status: 401 });
+  const contaId = contaAtual();
+  if (!contaId) return new Response("Não autorizado.", { status: 401 });
   if (!process.env.GROQ_API_KEY) {
     return new Response("Chave da API não configurada (.env.local).", { status: 500 });
+  }
+
+  // Consome 1 descrição do limite mensal.
+  const ok = await consumir(contaId, "descricoes");
+  if (!ok) {
+    return new Response(
+      JSON.stringify({
+        error: "Você atingiu o limite de descrições deste mês. O contador zera no início do próximo mês (ou gire a roleta pra ganhar bônus).",
+      }),
+      { status: 402, headers: { "Content-Type": "application/json" } }
+    );
   }
 
   const { dados }: { dados: Record<string, unknown> } = await req.json();

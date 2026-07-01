@@ -5,6 +5,7 @@ import { SKILLS } from "@/lib/skills";
 import { prisma } from "@/lib/db";
 import { formatBRL } from "@/lib/format";
 import { contaAtual } from "@/lib/auth";
+import { consumir } from "@/lib/limites";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -45,6 +46,17 @@ export async function POST(req: Request) {
           "Chave da API não configurada. Cole sua GROQ_API_KEY no arquivo .env.local e reinicie o servidor.",
       }),
       { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  // Consome 1 interação do limite mensal. Se estourou, retorna 402.
+  const ok = await consumir(contaId, "interacoes");
+  if (!ok) {
+    return new Response(
+      JSON.stringify({
+        error: "Você atingiu o limite de interações deste mês. O contador zera no início do próximo mês (ou gire a roleta pra ganhar bônus).",
+      }),
+      { status: 402, headers: { "Content-Type": "application/json" } }
     );
   }
 
